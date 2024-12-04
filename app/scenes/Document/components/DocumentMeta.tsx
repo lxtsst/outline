@@ -3,7 +3,7 @@ import { observer, useObserver } from "mobx-react";
 import { CommentIcon } from "outline-icons";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useRouteMatch } from "react-router-dom";
+import { Link, useLocation, useRouteMatch } from "react-router-dom";
 import styled from "styled-components";
 import { TeamPreference } from "@shared/types";
 import Document from "~/models/Document";
@@ -27,6 +27,7 @@ function TitleDocumentMeta({ to, document, revision, ...rest }: Props) {
   const { views, comments, ui } = useStores();
   const { t } = useTranslation();
   const match = useRouteMatch();
+  const location = useLocation();
   const team = useCurrentTeam();
   const documentViews = useObserver(() => views.inDocument(document.id));
   const totalViewers = documentViews.length;
@@ -45,7 +46,10 @@ function TitleDocumentMeta({ to, document, revision, ...rest }: Props) {
         <>
           &nbsp;•&nbsp;
           <CommentLink
-            to={documentPath(document)}
+            to={{
+              pathname: documentPath(document),
+              state: location.state,
+            }}
             onClick={() => ui.toggleComments()}
           >
             <CommentIcon size={18} />
@@ -62,9 +66,13 @@ function TitleDocumentMeta({ to, document, revision, ...rest }: Props) {
         <Wrapper>
           &nbsp;•&nbsp;
           <Link
-            to={
-              match.url === insightsPath ? documentPath(document) : insightsPath
-            }
+            to={{
+              pathname:
+                match.url === insightsPath
+                  ? documentPath(document)
+                  : insightsPath,
+              state: location.state,
+            }}
           >
             {t("Viewed by")}{" "}
             {onlyYou

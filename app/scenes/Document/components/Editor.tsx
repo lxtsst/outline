@@ -3,7 +3,7 @@ import { observer } from "mobx-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { mergeRefs } from "react-merge-refs";
-import { useHistory, useRouteMatch } from "react-router-dom";
+import { useHistory, useLocation, useRouteMatch } from "react-router-dom";
 import { richExtensions, withComments } from "@shared/editor/nodes";
 import { TeamPreference } from "@shared/types";
 import { colorPalette } from "@shared/utils/collections";
@@ -82,6 +82,7 @@ function DocumentEditor(props: Props, ref: React.RefObject<any>) {
   const user = useCurrentUser({ rejectOnEmpty: false });
   const team = useCurrentTeam({ rejectOnEmpty: false });
   const history = useHistory();
+  const location = useLocation();
   const params = useQuery();
   const {
     document,
@@ -113,12 +114,15 @@ function DocumentEditor(props: Props, ref: React.RefObject<any>) {
         history.replace({
           search: focusedComment.isResolved ? "resolved=" : "",
           pathname: location.pathname,
-          state: { commentId: focusedComment.id },
+          state: {
+            ...(location.state as Record<string, unknown>),
+            commentId: focusedComment.id,
+          },
         });
       }
       ui.set({ commentsExpanded: true });
     }
-  }, [focusedComment, ui, document.id, history, params]);
+  }, [focusedComment, ui, document.id, history, location, params]);
 
   // Save document when blurring title, but delay so that if clicking on a
   // button this is allowed to execute first.
@@ -143,10 +147,10 @@ function DocumentEditor(props: Props, ref: React.RefObject<any>) {
     (commentId: string) => {
       history.replace({
         pathname: window.location.pathname.replace(/\/history$/, ""),
-        state: { commentId },
+        state: { ...(location.state as Record<string, unknown>), commentId },
       });
     },
-    [history]
+    [history, location]
   );
 
   // Create a Comment model in local store when a comment mark is created, this
@@ -171,10 +175,10 @@ function DocumentEditor(props: Props, ref: React.RefObject<any>) {
 
       history.replace({
         pathname: window.location.pathname.replace(/\/history$/, ""),
-        state: { commentId },
+        state: { ...(location.state as Record<string, unknown>), commentId },
       });
     },
-    [comments, user?.id, props.id, history]
+    [comments, user?.id, props.id, history, location]
   );
 
   // Soft delete the Comment model when associated mark is totally removed.
@@ -238,11 +242,13 @@ function DocumentEditor(props: Props, ref: React.RefObject<any>) {
       {!shareId && (
         <DocumentMeta
           document={document}
-          to={
-            match.path === matchDocumentHistory
-              ? documentPath(document)
-              : documentHistoryPath(document)
-          }
+          to={{
+            pathname:
+              match.path === matchDocumentHistory
+                ? documentPath(document)
+                : documentHistoryPath(document),
+            state: location.state,
+          }}
           rtl={
             titleRef.current?.getComputedDirection() === "rtl" ? true : false
           }

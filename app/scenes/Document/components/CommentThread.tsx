@@ -101,7 +101,10 @@ function CommentThread({
       history.replace({
         search: location.search,
         pathname: location.pathname,
-        state: { commentId: undefined },
+        state: {
+          ...(location.state as Record<string, unknown>),
+          commentId: undefined,
+        },
       });
     }
   });
@@ -115,7 +118,10 @@ function CommentThread({
       // Clear any commentId from the URL when explicitly focusing a thread
       search: thread.isResolved ? "resolved=" : "",
       pathname: location.pathname.replace(/\/history$/, ""),
-      state: { commentId: thread.id },
+      state: {
+        ...(location.state as Record<string, unknown>),
+        commentId: thread.id,
+      },
     });
   };
 
